@@ -18,3 +18,8 @@ hex = "0.4"
 
 # gui dependency
 eframe = "0.9.0" # Gives us egui, epi and web+native backends
+
+
+[features]
+default = []
+http = ["eframe/http"] # Enable if you want to do http requests

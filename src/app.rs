@@ -1,7 +1,6 @@
-use eframe::{egui, epi};
 
 use crate::emulator::cpu::{self, CPU6502};
-
+use eframe::{egui, epi};
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 // #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 pub struct EmuDisplayApp {
@@ -26,7 +25,7 @@ impl Default for EmuDisplayApp {
 
 impl epi::App for EmuDisplayApp {
     fn name(&self) -> &str {
-        "Simple 6502 Emulator"
+        "Title: Hamza's egui template"
     }
 
     /// Called by the framework to load old app state (if any).
