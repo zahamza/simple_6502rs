@@ -35,9 +35,9 @@ I used the [egui library](https://github.com/emilk/egui) to code the application
 * Implement decimal mode
 
 ## Purpose (Ramblings)
-I wanted to build a NES emulator and I also wanted to learn Rust. I then decided to code a NES emulator, and the cpu code found here is the first actual coding of that effort. I wanted to also try to use a GUI for the fun of it so I decided on egui because it was easy to use and could compile as both a native and web app. This was made for fun to learn, so if you anyone actually reading this looks at the code, please remember that. 
+I wanted to build a NES emulator and I also wanted to learn Rust. I then decided to code a NES emulator, and the cpu code found here is the first actual coding of that effort. I wanted to also try to use a GUI for the fun of it so I decided on egui because it was easy to use and could compile as both a native and web app. This was made for fun and to learn, so if anyone actually reads the code please remember that 😅. 
 
-This app may also be used to help me debug my CPU and more easily test things while developing the NES further. I will use this code to help finish my own NES emulation, if you're interested in making your own check out some of the resources I used or I thought could be helpful (I didn't make any of these).
+This app may also be used to help me debug my CPU and more easily test things while developing my NES emulator further. I will use this code to help finish my own NES emulation, if you're interested in making your own check out some of the resources I used or I thought could be helpful (I didn't make any of these).
 
 
 ## Resources 
