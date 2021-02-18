@@ -40,5 +40,5 @@ This app may also be used to help me debug my CPU and more easily test things wh
 * To understand carry flag and how it was can be used as a borrow [link](https://en.wikipedia.org/wiki/Carry_flag#Vs._borrow_flag)
 * I used this to reaffrim some of my assembly understanding [Easy 6502](https://skilldrick.github.io/easy6502/)
 * NESDEV wiki: read a bit for a lot but [specifically](http://wiki.nesdev.com/w/index.php/Status_flags#The_B_flag)
-*  [@bugzmanov](http://twitter.com/bugzmanov)'s ["Writing a NES Emulator in Rust"](https://bugzmanov.github.io/nes_ebook/chapter_1.html) had gave me some ideas for how to write certain things in Rust
+*  [@bugzmanov](http://twitter.com/bugzmanov)'s ["Writing a NES Emulator in Rust"](https://bugzmanov.github.io/nes_ebook/chapter_1.html) gave me some ideas for how to write certain things in Rust
 
