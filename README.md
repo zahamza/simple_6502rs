@@ -27,7 +27,7 @@ You can read the [egui template](https://github.com/emilk/egui_template/blob/mas
 I used the [egui library](https://github.com/emilk/egui) to code the application/GUI portion and to compile the app to wasm. 
 
 ## Potential Additions
-* I need to refactor some code, especially in app.rs
+* I need to refactor and clean some code, especially in app.rs
 * Program in interrupts into the GUI (cpu code already present)
 * Display total cycles ran (cpu code present, needs to be placed in GUI)
 * Display more disassembled instructions (potentially in window format)
