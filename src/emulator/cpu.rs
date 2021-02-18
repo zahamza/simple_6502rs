@@ -52,7 +52,7 @@ pub struct CPU6502{
     
     // The retrieved/fetched byte
     // operand could also be in
-    // addr_rel or addr_abs
+    // addr_abs
     operand : Option<u8>,   
 
     // address in absolute terms
@@ -60,9 +60,6 @@ pub struct CPU6502{
     // and refers to addr of operand
     // or is the actual operand
     addr_abs : Option<u16>,
-
-    // addr change used for REL and branching
-    addr_rel : Option<u8>,
 
     // mode of current operation
     mode : AddressingMode,
@@ -99,7 +96,6 @@ impl CPU6502{
 
             operand : None,
             addr_abs : None, 
-            addr_rel : None, 
             mode : AddressingMode::IMP,
             page_crossed : false,      
             
@@ -124,7 +120,6 @@ impl CPU6502{
 
             operand : None,
             addr_abs : None, 
-            addr_rel : None, 
             mode : AddressingMode::IMP,
             page_crossed : false,      
             
@@ -225,7 +220,6 @@ impl CPU6502{
             // set internal variables to none after operation is complete 
             self.operand = None;
             self.addr_abs = None; 
-            self.addr_rel = None;
 
             self.total_cycles += self.cycles;
             opcode = self.read_pc();
@@ -257,8 +251,7 @@ impl CPU6502{
         // set internal variables to none after operation is complete 
         self.operand = None;
         self.addr_abs = None; 
-        self.addr_rel = None;
-        
+
         self.total_cycles += self.cycles;
         self.cycles
     }
@@ -289,7 +282,6 @@ impl CPU6502{
             // set internal variables to none after operation is complete 
             self.operand = None;
             self.addr_abs = None; 
-            self.addr_rel = None;
         }
 
         self.cycles -= 1;
@@ -318,7 +310,6 @@ impl CPU6502{
         // Clean private internals
         self.operand = None;
         self.addr_abs = None;
-        self.addr_rel = None;
         self.mode = AddressingMode::IMP;
     }
 
@@ -350,7 +341,6 @@ impl CPU6502{
             // Clean private internals
             self.operand = None;
             self.addr_abs = None;
-            self.addr_rel = None;
             self.mode = AddressingMode::IMP;
         }
         
@@ -381,12 +371,13 @@ impl CPU6502{
         // Clean private internals
         self.operand = None;
         self.addr_abs = None;
-        self.addr_rel = None;
         self.mode = AddressingMode::IMP;
     }
 
-    // sets up internals (addr_abs, addr_rel, page_crossed) 
-    // and pc appropriately 
+    /// sets up internals addr_abs, page_crossed,
+    /// pc
+    ///
+    /// Changes operand internal when mode is either ACC or REL
     fn run_addr_mode(&mut self, mode : AddressingMode) {
         use AddressingMode::*;
 
@@ -396,19 +387,18 @@ impl CPU6502{
         match mode {
 
             IMM => {
-                self.addr_abs = Some(self.pc); 
+                self.addr_abs = Some(self.pc);
                 self.pc += 1;
             }
 
             ACC => {
-                // doesn't use addr
+                // doesn't use addr_abs
                 self.operand = Some(self.reg_a);
             }
 
             REL => {
-
-                self.addr_rel = Some(self.read_pc());
-
+                // doesn't use addr_abs
+                self.operand = Some(self.read_pc());
             }
 
             ZP0 => {
@@ -521,7 +511,7 @@ impl CPU6502{
         };
     }
     
-    // run_addr_mode before hand being ran to set internals properly
+    /// run_addr_mode needs to have been called before running this to set internals properly
     fn run_operation(&mut self, opcode : u8, mode : AddressingMode){
 
         self.mode = mode;
@@ -531,14 +521,15 @@ impl CPU6502{
             /* operand doesn't need to be set */
             AddressingMode::IMP => None,
 
-            // Need addr_rel set
-            AddressingMode::REL => None,
+            // Operand has already been set in run_addr_mode
+            AddressingMode::REL => self.operand,
 
-            // Need only addr_abs set
+            // Don't need operand set, will only work w/
+            // addr_abs which has been set in run_addr_mode
             AddressingMode::IND => None,
 
-            // operand should have already been set to a
-            // but do it again just in case  
+            // operand should have already been set in run_addr_mode
+            // but may as well keep
             AddressingMode::ACC => Some(self.reg_a),
 
             // need to fetch operand from specified addr
@@ -843,7 +834,7 @@ impl CPU6502{
     fn branch(&mut self){
         self.cycles += 1;
 
-        let delta = self.addr_rel.unwrap() as i8;
+        let delta = self.operand.unwrap() as i8;
 
         let addr = self.pc.wrapping_add(delta as u16);
 
