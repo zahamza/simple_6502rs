@@ -3,6 +3,9 @@ use crate::emulator::bus::{self, Bus};
 pub use crate::emulator::instruction::OPCODE_MAP;
 pub use crate::emulator::instruction::AddressingMode;
 
+const BRK_OPCODE : u8 = 0x00;
+const NOP_OPCODE : u8 = 0xEA;
+
 
 bitflags! {
     //  7 6 5 4 3 2 1 0
@@ -78,6 +81,8 @@ impl CPU6502{
     pub const RESET_CYCLES: u32 = 8;
     pub const IRQ_CYCLES: u32 = 7;
     pub const NMI_CYCLES: u32 = 8;
+
+    
 
     pub fn new(bus : Box<bus::Bus>) -> CPU6502{
         CPU6502{
@@ -156,7 +161,7 @@ impl CPU6502{
 
     /// Returns the number of total cycles ran on the cpu instance/
     /// 
-    /// Affected by clock(),
+    /// Affected by clock(), execute_step(),
     /// , run_cycles(), and run_until_brk()
     pub fn get_total_cycles(&self) -> u32 {
         self.total_cycles
@@ -180,14 +185,14 @@ impl CPU6502{
         self.bus.write(addr, val);
     }
 
-    // incriments pc by 1
+    /// incriments pc by 1 after reading
     fn read_pc(&mut self) -> u8 {
         let val = self.read(self.pc);
         self.pc = self.pc.wrapping_add(1);
         val
     }
 
-    // incriments pc by 2
+    /// incriments pc by 2 after reading a 2 bytes (little endian)
     fn read_pc_u16(&mut self) -> u16{
         let lo = self.read_pc() as u16;
         let hi = self.read_pc() as u16;
@@ -207,10 +212,10 @@ impl CPU6502{
         let map = &*OPCODE_MAP;
 
         let mut opcode = self.read_pc();
-        while opcode!= 0x00 {
+        while opcode!= BRK_OPCODE {
 
-            // opcode in unwrap is that of NOP
-            let instr = map.get(&opcode).unwrap_or(map.get(&0xEA).unwrap());
+            // _or here allows CPU to run a NOP if opcode read doesn't match an instruction
+            let instr = map.get(&opcode).unwrap_or(map.get(&NOP_OPCODE).unwrap());
 
             let mode = instr.mode; 
 
@@ -241,8 +246,8 @@ impl CPU6502{
 
         let map = &*OPCODE_MAP;
 
-        // NOP opcode in unwrap
-        let instr = map.get(&opcode).unwrap_or(OPCODE_MAP.get(&0xEA).unwrap());
+        // _or here allows CPU to run a NOP if opcode read doesn't match an instruction
+        let instr = map.get(&opcode).unwrap_or(OPCODE_MAP.get(&NOP_OPCODE).unwrap());
 
         let mode = instr.mode;
 
