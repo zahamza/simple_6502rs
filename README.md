@@ -1,6 +1,6 @@
 # simple_6502rs
 ## [Web App](https://zahamza.github.io/simple_6502rs/)
-Web App deployed on link above. This app is made more fun and learning, so code will probably break if its pushed too hard (I added some guards, however).
+Web App deployed on link above. The app was designed to be used with a smaller window than fullscreen (see screenshot on 'Native Look'), so theres some wasted space with fullscreen. This app is made more fun and learning, so code will probably break if its pushed too hard (I added some guards, however).
 
 /docs and its scripts were slightly modfied version of the [egui template](https://github.com/emilk/egui_template/). If you want to compile the wasm on your own or use the scripts, [read here](https://github.com/emilk/egui_template/blob/master/README.md#compiling-for-the-web), it follows the same structure.
 
@@ -14,6 +14,10 @@ If you click *Continous Run* the emulator will run until a **BRK** opcode is rea
 *CPU Reset* will reset the internal registers of the CPU.
 
 *Clear* will reset both the internal registers and the RAM.
+
+## Native Look
+![Native Screenshot](/images/NativeScreenshot.png)
+
 
 ## Compiling Locally
 You will need to have Rust and Cargo installed [(see here)](https://www.rust-lang.org/tools/install)
