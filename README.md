@@ -1,6 +1,9 @@
 # simple_6502rs
+
+This is functional emulation of the [6502 microprocessor](https://en.wikipedia.org/wiki/MOS_Technology_6502). This app that can run both natively and on the web. See [purpose](#purpose) for why I made this
+
 ## [Web App](https://zahamza.github.io/simple_6502rs/)
-Web App deployed on link above. The app was designed to be used with a smaller window than fullscreen (see screenshot on 'Native Look'), so theres some wasted space with fullscreen. This app is made more fun and learning, so code will probably break if its pushed too hard (I added some guards, however).
+Web App deployed on link above. The app was designed to be used with a smaller window than fullscreen (see [screenshot](#native-look)), so theres some wasted space with fullscreen. This app is made more fun and learning, so code will probably break if its pushed too hard (I added some guards, however).
 
 /docs and its scripts were slightly modfied version of the [egui template](https://github.com/emilk/egui_template/). If you want to compile the wasm on your own or use the scripts, [read here](https://github.com/emilk/egui_template/blob/master/README.md#compiling-for-the-web), it follows the same structure.
 
@@ -38,7 +41,7 @@ I used the [egui library](https://github.com/emilk/egui) to code the application
 * Clean up GUI so it fits better with full screen
 * Implement decimal mode
 
-## Purpose (Ramblings)
+## Purpose
 I wanted to build a NES emulator and I also wanted to learn Rust. I then decided to code a NES emulator, and the cpu code found here is the first actual coding of that effort. I wanted to also try to use a GUI for the fun of it so I decided on egui because it was easy to use and could compile as both a native and web app. This was made for fun and to learn, so if anyone actually reads the code please remember that 😅. 
 
 This app may also be used to help me debug my CPU and more easily test things while developing my NES emulator further. I will use this code to help finish my own NES emulation, if you're interested in making your own check out some of the resources I used or I thought could be helpful (I didn't make any of these).
