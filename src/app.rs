@@ -254,10 +254,15 @@ impl epi::App for EmuDisplayApp {
                         egui::Hyperlink::new("http://obelisk.me.uk/6502/reference.html").text("Instruction Reference")
                     );
                     ui.add(
-                        egui::Hyperlink::new("https://www.masswerk.at/6502/6502_instruction_set.html").text("Instruction Set")
+                        egui::Hyperlink::new("https://github.com/zahamza/simple_6502rs").text("Instruction Set")
                     );
 
                 });
+
+                ui.separator();
+
+                ui.add(egui::Hyperlink::new("https://www.masswerk.at/6502/6502_instruction_set.html").text("Source Code"));
+
 
                 ui.separator();
             });
@@ -268,8 +273,8 @@ impl epi::App for EmuDisplayApp {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("Introduction");
             ui.horizontal_wrapped_for_text(egui::TextStyle::Body, |ui|{
-                ui.label("Hi! I made this for for fun while making a NES emulator, so decimal mode is unsupported");
-                ui.label("All numbers are hexadecimal (including inputs) are hexadecimal");
+                ui.label("Hi! I made this for for fun while making a NES emulator, so decimal mode is unsupported.");
+                ui.label("Remember, numbers (including inputs) are/should be hexadecimal.");
             });
 
             ui.horizontal_wrapped_for_text(egui::TextStyle::Body, |ui|{
