@@ -1,3 +1,5 @@
+use std::usize;
+
 const CPU_RAM_SIZE : usize = 64*1024; // 64 KB
 
 
@@ -38,6 +40,14 @@ impl CPU_RAM {
     pub fn new() -> CPU_RAM{
         CPU_RAM(Box::new([0; CPU_RAM_SIZE]))
     }
+
+    pub fn index_memory(&self, start: u16, end: u16) -> Option<&[u8]>{
+        let start = start as usize;
+        let end = end as usize;
+
+        self.0.get(start..=end)
+    }
+
 }
 
 impl Memory for CPU_RAM{

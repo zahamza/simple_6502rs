@@ -1,12 +1,8 @@
-use core::panic;
-
-
 use crate::emulator::bus::{self, Bus};
 
 pub use crate::emulator::instruction::OPCODE_MAP;
 pub use crate::emulator::instruction::AddressingMode;
 
-const STACK_OFFSET : u16 = 0x0100;
 
 bitflags! {
     //  7 6 5 4 3 2 1 0
@@ -48,6 +44,8 @@ pub struct CPU6502{
 
     // cycles left before instruction completed
     cycles : u32,  
+
+    total_cycles : u32,
     
     // The retrieved/fetched byte
     // operand could also be in
@@ -76,18 +74,23 @@ pub struct CPU6502{
 }
 
 impl CPU6502{
+    pub const STACK_OFFSET : u16 = 0x0100;
+    pub const RESET_CYCLES: u32 = 8;
+    pub const IRQ_CYCLES: u32 = 7;
+    pub const NMI_CYCLES: u32 = 8;
 
     pub fn new(bus : Box<bus::Bus>) -> CPU6502{
         CPU6502{
             reg_a : 0x00,
             reg_x: 0x00,
             reg_y: 0x00,
-            stk_ptr: 0x00,
+            stk_ptr: 0xFD,
             pc : 0x0000,
             status: Flags::U, // unused always set
 
             bus,
             cycles : 0, 
+            total_cycles: 0,
 
             operand : None,
             addr_abs : None, 
@@ -97,18 +100,22 @@ impl CPU6502{
             
         }
     }
-    
-    pub fn create_cpu_and_bus() -> Self {
+
+    /// Creates bus and cpu with pc specified
+    ///
+    /// Internals specified for GUI usage
+    pub fn create_cpu_and_bus(pc: u16) -> Self {
         Self{
             reg_a : 0x00,
             reg_x: 0x00,
             reg_y: 0x00,
-            stk_ptr: 0x00,
-            pc : 0x0000,
+            stk_ptr: 0xFF,
+            pc : pc,
             status: Flags::U, // unused always set
 
             bus: Box::new(Bus::new()),
             cycles : 0, 
+            total_cycles : 0,
 
             operand : None,
             addr_abs : None, 
@@ -118,6 +125,7 @@ impl CPU6502{
             
         }
     }
+
 
     /// default load that calls reset
     /// this means you must execute 8 clock cycles
@@ -142,8 +150,16 @@ impl CPU6502{
     pub fn run_cycles(&mut self, cycles : u32){
         for _i in 1..=cycles {
             self.clock();
-
         }
+        // total cycles adjusted with clock
+    }
+
+    /// Returns the number of total cycles ran on the cpu instance/
+    /// 
+    /// Affected by clock(),
+    /// , run_cycles(), and run_until_brk()
+    pub fn get_total_cycles(&self) -> u32 {
+        self.total_cycles
     }
 
     /// Returns data at address, handled by bus implementation
@@ -151,6 +167,7 @@ impl CPU6502{
         self.bus.read(addr)
     }
 
+    /// Returns two bytes combined, following little endian
     pub fn read_u16(&self, addr: u16) -> u16{
         let lo = self.bus.read(addr);
         let hi = self.bus.read(addr.wrapping_add(1));
@@ -179,30 +196,65 @@ impl CPU6502{
 
     }
 
+    /// Indexes from start..=end
+    pub fn index_memory(&self, start: u16, end: u16) -> Option<&[u8]> { 
+        self.bus.index_memory(start, end)
+    }
+
+    /// Will treat unknown opcodes as NOPs
+    /// aka designed for GUI usage
+    pub fn run_until_brk(&mut self) {
+        let map = &*OPCODE_MAP;
+
+        let mut opcode = self.read_pc();
+        while opcode!= 0x00 {
+
+            // opcode in unwrap is that of NOP
+            let instr = map.get(&opcode).unwrap_or(map.get(&0xEA).unwrap());
+
+            let mode = instr.mode; 
+
+            self.run_addr_mode(mode);
+            self.run_operation(instr.opcode, mode);
+
+            // set internal variables to none after operation is complete 
+            self.operand = None;
+            self.addr_abs = None; 
+            self.addr_rel = None;
+
+            self.total_cycles += self.cycles;
+            opcode = self.read_pc();
+
+        }
+    }
+
     /// Ignores clock cycles and exectues
     /// the next instruction
     ///
     /// Returns number of cycles instruction took
-    pub fn exectue_step(&mut self) -> u32 {
+    /// 
+    /// Treats invalid instructions as NOPs
+    /// aka designed for GUI usage
+    pub fn execute_step(&mut self) -> u32 {
         // fetch opcode
         let opcode = self.read_pc();
 
         let map = &*OPCODE_MAP;
 
-        let instr = map.get(&opcode).unwrap_or_else
-            (|| {panic!("Opcode{} not found in instr map!\n", opcode)}
-            );
+        // NOP opcode in unwrap
+        let instr = map.get(&opcode).unwrap_or(OPCODE_MAP.get(&0xEA).unwrap());
 
         let mode = instr.mode;
 
         self.run_addr_mode(mode);
-        self.run_operation(opcode, mode);
+        self.run_operation(instr.opcode, mode);
 
         // set internal variables to none after operation is complete 
         self.operand = None;
         self.addr_abs = None; 
         self.addr_rel = None;
-
+        
+        self.total_cycles += self.cycles;
         self.cycles
     }
 
@@ -236,9 +288,11 @@ impl CPU6502{
         }
 
         self.cycles -= 1;
-
+        self.total_cycles += 1;
     }
 
+    /// Must run appropriate amoutn of cycles to allow cpu to continue after
+    /// calling this
     pub fn reset(&mut self) {
 
         // set registers
@@ -254,7 +308,7 @@ impl CPU6502{
         // Read vector according to 6502 specification 
         self.pc = self.read_u16(0xFFFC);
 
-        self.cycles = 8;
+        self.cycles = CPU6502::RESET_CYCLES;
 
         // Clean private internals
         self.operand = None;
@@ -265,6 +319,9 @@ impl CPU6502{
 
     /// Interrupt Request
     ///  * Only runs if interrupts enabled (Flags::I == 0)
+    ///
+    /// Must run appropriate amoutn of cycles to allow cpu to continue after
+    /// calling this
     pub fn irq(&mut self) {
 
         if !self.status.contains(Flags::I){
@@ -283,7 +340,7 @@ impl CPU6502{
             // Read vector according to 6502 specification 
             self.pc = self.read_u16(0xFFFE);
 
-            self.cycles = 7;
+            self.cycles = CPU6502::IRQ_CYCLES;
 
             // Clean private internals
             self.operand = None;
@@ -295,6 +352,9 @@ impl CPU6502{
     }
 
     /// Non-maskable interrupt
+    ///
+    /// Must run appropriate amoutn of cycles to allow cpu to continue after
+    /// calling this
     pub fn nmi(&mut self)  {
         // push pc into stack
         //  follow little endian by pushing
@@ -311,7 +371,7 @@ impl CPU6502{
         // Read vector according to 6502 specification 
         self.pc = self.read_u16(0xFFFA);
 
-        self.cycles = 8;
+        self.cycles = CPU6502::NMI_CYCLES;
 
         // Clean private internals
         self.operand = None;
@@ -806,19 +866,21 @@ impl CPU6502{
     }
 
     fn stack_push(&mut self, data : u8) {
-        let addr = self.stk_ptr as u16 + STACK_OFFSET;
+        let addr = self.stk_ptr as u16 + CPU6502::STACK_OFFSET;
         self.write(addr, data);
         self.stk_ptr = self.stk_ptr.wrapping_sub(1);
     }
 
     fn stack_pop(&mut self) -> u8 {
         self.stk_ptr = self.stk_ptr.wrapping_add(1);
-        let addr = self.stk_ptr as u16 + STACK_OFFSET;
+        let addr = self.stk_ptr as u16 + CPU6502::STACK_OFFSET;
         self.read(addr)
     }
 
 
     /* Operations to run */
+    //  Only need to account for extra cycles, default cycless
+    //  handled in run_operation()
 
     fn brk(&mut self) {
 
@@ -1417,5 +1479,6 @@ impl CPU6502{
 
 
 }
+
 
 

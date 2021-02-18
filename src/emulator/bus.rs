@@ -12,12 +12,19 @@ pub struct Bus{
 
 }
 
+
 impl Bus{
     pub fn new() -> Bus{
         Bus{
             cpu_ram : CPU_RAM::new(),
         }
     }
+
+    /// Indexes from start..=end
+    pub fn index_memory(&self, start: u16, end: u16) -> Option<&[u8]> {
+        self.cpu_ram.index_memory(start, end)
+    }
+    
 
     pub fn write(&mut self, addr : u16, val : u8) {
 
@@ -45,12 +52,3 @@ impl Bus{
 
 }   
 
-
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-}
