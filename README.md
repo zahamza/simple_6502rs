@@ -15,6 +15,14 @@ If you click *Continous Run* the emulator will run until a **BRK** opcode is rea
 
 *Clear* will reset both the internal registers and the RAM.
 
+## Compiling Locally
+You will need to have Rust and Cargo installed [(see here)](https://www.rust-lang.org/tools/install)
+
+To compile the native version, simply run "cargo run --release" while in the equivalent of the /simple_6502rs directory.
+
+You can read the [egui template](https://github.com/emilk/egui_template/blob/master/README.md) for more detailed instruction on how to compile for the web. The gist of it is, while in /simple_6502rs directory first run the ./setup_web.sh script. After this one can build with ./build_web.sh and start a server with ./start_server.sh. If you decide to change directory paths you may need to modify these scripts
+
+
 ## Credits
 I used the [egui library](https://github.com/emilk/egui) to code the application/GUI portion and to compile the app to wasm. 
 
