@@ -50,15 +50,16 @@ pub struct CPU6502{
 
     total_cycles : u32,
     
-    // The retrieved/fetched byte
-    // operand could also be in
-    // addr_abs
+    /// A single byte operand for all instructions whose operands are not addresses
+    /// 
+    /// Operand can come from: specified place in memory, the accumulator,
+    /// or the byte following the opcode
     operand : Option<u8>,   
 
-    // address in absolute terms
-    // set by (most) address modes
-    // and refers to addr of operand
-    // or is the actual operand
+    /// An address in absolute terms.
+    ///
+    /// Represents either the address of a fetched operand,
+    /// or is an address operand (eg. for jmp)
     addr_abs : Option<u16>,
 
     // mode of current operation
@@ -68,6 +69,7 @@ pub struct CPU6502{
     *  cycle is needed
     *  can be set in addressing modes: ABX, ABY, IDY
     */
+    /// Set after calling run_addr_mode
     page_crossed : bool,
 
     // =============================
@@ -374,51 +376,41 @@ impl CPU6502{
         self.mode = AddressingMode::IMP;
     }
 
-    /// sets up internals addr_abs, page_crossed,
-    /// pc
-    ///
-    /// Changes operand internal when mode is either ACC or REL
+    /// Sets up internals addr_abs, operand, and page_crossed.
+    /// 
+    /// Also incriments PC to point at next opcode
     fn run_addr_mode(&mut self, mode : AddressingMode) {
         use AddressingMode::*;
 
         // set at the beginning
         self.page_crossed = false;
 
-        match mode {
-
-            IMM => {
-                self.addr_abs = Some(self.pc);
-                self.pc += 1;
-            }
-
-            ACC => {
-                // doesn't use addr_abs
-                self.operand = Some(self.reg_a);
-            }
-
-            REL => {
-                // doesn't use addr_abs
-                self.operand = Some(self.read_pc());
+        // addr_abs will either be the address of operand,
+        // or an operand that is an address
+        self.addr_abs = match mode {
+            // These modes won't utilize addr_abs
+            IMP | ACC | IMM | REL => {
+                None
             }
 
             ZP0 => {
-                self.addr_abs = Some(self.read_pc() as u16);
+                Some(self.read_pc() as u16)
             }
 
             ZPX => {
                 let byte = self.read_pc();
-                self.addr_abs = Some(byte.wrapping_add(self.reg_x) as u16);
+                Some(byte.wrapping_add(self.reg_x) as u16)
 
             }
 
             ZPY => {
                 let byte = self.read_pc();
-                self.addr_abs = Some(byte.wrapping_add(self.reg_y) as u16);
+                Some(byte.wrapping_add(self.reg_y) as u16)
                 
             }  
 
             ABS => {
-                self.addr_abs = Some(self.read_pc_u16());
+                Some(self.read_pc_u16())
             }
 
             ABX => {
@@ -427,7 +419,7 @@ impl CPU6502{
 
                 self.page_crossed = (new_addr & 0xFF00) != (read_addr & 0xFF00);
 
-                self.addr_abs = Some(new_addr);
+                Some(new_addr)
 
             }
 
@@ -437,7 +429,7 @@ impl CPU6502{
 
                 self.page_crossed = (new_addr & 0xFF00) != (read_addr & 0xFF00);
 
-                self.addr_abs = Some(new_addr);
+                Some(new_addr)
             }
 
             IND => {  
@@ -452,10 +444,8 @@ impl CPU6502{
                 *   result ideally would be 0x5040, but we get 0x6040
                 *   => next_ptr = 0x1000
                 */
-
                 // simulating page boundary hardware bug
                 let next_ptr = match base_ptr & 0x00FF {
-
                     // need to cross a page boundary to reach next_ptr
                     0x00FF => base_ptr & 0xFF00,
 
@@ -465,7 +455,7 @@ impl CPU6502{
                 let lo = self.read(base_ptr) as u16;
                 let hi = self.read(next_ptr) as u16;
                 
-                self.addr_abs = Some((hi << 8) | lo);
+                Some((hi << 8) | lo)
             }
 
             IDX => {
@@ -479,11 +469,10 @@ impl CPU6502{
                 let lo = self.read(ptr as u16) as u16;
                 let hi = self.read(nxt as u16) as u16;
 
-                self.addr_abs = Some((hi << 8) | lo);
+                Some((hi << 8) | lo)
             }
 
             IDY => {
-
                 /* supplied 8-bit address indexs in page 0x00.
                 *  The 16 bit address retrieved is then offset
                 *  by y to get the operand's address.
@@ -499,44 +488,40 @@ impl CPU6502{
                 let op_addr = retrieved_addr.wrapping_add(self.reg_y as u16);
 
                 self.page_crossed = (op_addr & 0xFF00) != (retrieved_addr & 0xFF00);
+                Some(op_addr)
 
-                self.addr_abs = Some(op_addr);
-
-            }
-
-            IMP => {
-                // nothing happens
             }
             
         };
-    }
-    
-    /// run_addr_mode needs to have been called before running this to set internals properly
-    fn run_operation(&mut self, opcode : u8, mode : AddressingMode){
 
-        self.mode = mode;
-
-        // set-up operand using addr_abs if needed 
+        // set operand 
+        //  may use addr_abs if needed 
         self.operand = match mode{
             /* operand doesn't need to be set */
-            AddressingMode::IMP => None,
+            IMP => None,
 
             // Operand has already been set in run_addr_mode
-            AddressingMode::REL => self.operand,
+            REL | IMM => Some(self.read_pc()),
 
             // Don't need operand set, will only work w/
             // addr_abs which has been set in run_addr_mode
-            AddressingMode::IND => None,
+            IND => None,
 
-            // operand should have already been set in run_addr_mode
-            // but may as well keep
-            AddressingMode::ACC => Some(self.reg_a),
+            
+            ACC => Some(self.reg_a),
 
             // need to fetch operand from specified addr
             _ => 
                 Some(self.read(self.addr_abs.unwrap()))
 
         };
+
+    }
+    
+    /// This function expects to have operand and addr_abs properly set (aka by call run_addr_mode before this)
+    fn run_operation(&mut self, opcode : u8, mode : AddressingMode){
+        // used for a few instructions
+        self.mode = mode;
 
         match opcode{
 
@@ -875,8 +860,11 @@ impl CPU6502{
 
 
     /* Operations to run */
+    // PC has assumed to been incrimented after having read
+    // opcode and appropriate operands
+
     //  Only need to account for extra cycles, default cycless
-    //  handled in run_operation()
+    //  should be by fcn which reads the initial opcode
 
     fn brk(&mut self) {
 
@@ -903,7 +891,7 @@ impl CPU6502{
 
     fn nop(&mut self) {
         // does nothing, pc has already been incrimented
-        // to read NOP opcode
+        // to have read NOP opcode
     }
 
     fn unimplemented_unofficial(&self) {
