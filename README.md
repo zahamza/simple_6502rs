@@ -1,6 +1,6 @@
 # simple_6502rs
 ## [Web App](https://zahamza.github.io/simple_6502rs/)
-Web App deployed on link above. This app is made more fun and learning, so code will probably break if its pushed to hard (I added some guards, however).
+Web App deployed on link above. This app is made more fun and learning, so code will probably break if its pushed too hard (I added some guards, however).
 
 /docs and its scripts were slightly modfied version of the [egui template](https://github.com/emilk/egui_template/). If you want to compile the wasm on your own or use the scripts, [read here](https://github.com/emilk/egui_template/blob/master/README.md#compiling-for-the-web), it follows the same structure.
 
@@ -45,7 +45,7 @@ This app may also be used to help me debug my CPU and more easily test things wh
 * javidx9's [NES CPU Video](https://www.youtube.com/watch?v=8XmxKPJDGU0)
 * All of the masswerk tools were useful, heres a link to the [assembler](https://www.masswerk.at/6502/assembler.html) and [emulator](https://www.masswerk.at/6502/index.html)
 * Obelisk [Instruction Reference](http://obelisk.me.uk/6502/reference.html)
-* To understand carry flag and how it was can be used as a borrow [link](https://en.wikipedia.org/wiki/Carry_flag#Vs._borrow_flag)
+* To understand carry flag and how it was can be used as a borrow [(link)](https://en.wikipedia.org/wiki/Carry_flag#Vs._borrow_flag)
 * I used this to reaffrim some of my assembly understanding [Easy 6502](https://skilldrick.github.io/easy6502/)
 * NESDEV wiki: read a bit for a lot but [specifically](http://wiki.nesdev.com/w/index.php/Status_flags#The_B_flag)
 *  [@bugzmanov](http://twitter.com/bugzmanov)'s ["Writing a NES Emulator in Rust"](https://bugzmanov.github.io/nes_ebook/chapter_1.html) gave me some ideas for how to write certain things in Rust
