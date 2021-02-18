@@ -261,7 +261,7 @@ impl epi::App for EmuDisplayApp {
 
                 ui.separator();
 
-                ui.add(egui::Hyperlink::new("https://www.masswerk.at/6502/6502_instruction_set.html").text("Source Code"));
+                ui.add(egui::Hyperlink::new("https://github.com/zahamza/simple_6502rs").text("Source Code"));
 
 
                 ui.separator();
