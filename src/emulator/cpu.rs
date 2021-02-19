@@ -1108,7 +1108,7 @@ impl CPU6502{
     }
 
     fn dey(&mut self) {
-        let val = self.reg_x.wrapping_sub(1);
+        let val = self.reg_y.wrapping_sub(1);
 
         self.status.set(Flags::Z, val == 0);
         self.status.set(Flags::N, val & 0x80 != 0);
@@ -1146,7 +1146,7 @@ impl CPU6502{
     }
 
     fn iny(&mut self) {
-        let val = self.reg_x.wrapping_add(1);
+        let val = self.reg_y.wrapping_add(1);
 
         self.status.set(Flags::Z, val == 0);
         self.status.set(Flags::N, val & 0x80 != 0);
